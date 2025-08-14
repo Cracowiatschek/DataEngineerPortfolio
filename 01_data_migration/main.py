@@ -65,9 +65,10 @@ def migrate(queue:deque, cursor_in, cursor_out):
     try:
         while len(queue) > 0:
             item = queue.popleft()
-            meta = check_metadata(cursor=cursor_in, schema=item.schema_in, table_name=item.name)
-            for i in meta:
-                print(f"{i}: {meta[i]}")
+            input_meta = check_metadata(cursor=cursor_in, schema=item.schema_in, table_name=item.name)
+            output_meta = check_metadata(cursor=cursor_in, schema=item.schema_out, table_name=item.name)
+            if input_meta == output_meta:
+                print(f"{item.name}: {item.schema_in} -> {item.schema_out}")
             # data = get_data(cursor=cursor_in, schema=item.schema_in, table_name=item.name)
             # print(data)
     except Exception as e:
