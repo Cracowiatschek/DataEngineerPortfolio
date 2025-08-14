@@ -35,9 +35,25 @@ def make_queue(config:list[dict]) -> deque:
 
 
 @task
+def check_metadata(cursor, schema:str, table_name:str) -> dict:
+    cursor.execute(f"""
+        SELECT column_name, data_type 
+        FROM information_schema.columns 
+        WHERE table_schema = '{schema}'
+        AND table_name = '{table_name}'
+        ORDER BY ordinal_position
+    """)
+    meta = {}
+    for row in cursor.fetchall():
+        meta[row[0]] = row[1]
+    return meta
+
+
+@task
 def get_data(cursor, schema:str, table_name:str):
     cursor.execute(f"SELECT * FROM {schema}.{table_name}")
     return cursor.fetchall()
+
 
 # @task
 # def load_data(cursor, schema:str, table_name:str):
@@ -49,8 +65,11 @@ def migrate(queue:deque, cursor_in, cursor_out):
     try:
         while len(queue) > 0:
             item = queue.popleft()
-            data = get_data(cursor=cursor_in, schema=item.schema_in, table_name=item.name)
-            print(data)
+            meta = check_metadata(cursor=cursor_in, schema=item.schema_in, table_name=item.name)
+            for i in meta:
+                print(f"{i}: {meta[i]}")
+            # data = get_data(cursor=cursor_in, schema=item.schema_in, table_name=item.name)
+            # print(data)
     except Exception as e:
         print(e)
     finally:
