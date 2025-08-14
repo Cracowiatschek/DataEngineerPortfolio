@@ -1,0 +1,92 @@
+[
+  {
+    "name": "country",
+    "schema_in": "public",
+    "schema_out": "dvd_rental",
+    "depends_on": []
+  },
+  {
+    "name": "city",
+    "schema_in": "public",
+    "schema_out": "dvd_rental",
+    "depends_on": ["country"]
+  },
+  {
+    "name": "address",
+    "schema_in": "public",
+    "schema_out": "dvd_rental",
+    "depends_on": ["city"]
+  },
+  {
+    "name": "staff",
+    "schema_in": "public",
+    "schema_out": "dvd_rental",
+    "depends_on": ["address"]
+  },
+  {
+    "name": "store",
+    "schema_in": "public",
+    "schema_out": "dvd_rental",
+    "depends_on": ["staff", "address"]
+  },
+  {
+    "name": "language",
+    "schema_in": "public",
+    "schema_out": "dvd_rental",
+    "depends_on": []
+  },
+  {
+    "name": "film",
+    "schema_in": "public",
+    "schema_out": "dvd_rental",
+    "depends_on": ["language"]
+  },
+  {
+    "name": "category",
+    "schema_in": "public",
+    "schema_out": "dvd_rental",
+    "depends_on": []
+  },
+  {
+    "name": "actor",
+    "schema_in": "public",
+    "schema_out": "dvd_rental",
+    "depends_on": []
+  },
+  {
+    "name": "film_category",
+    "schema_in": "public",
+    "schema_out": "dvd_rental",
+    "depends_on": ["film", "category"]
+  },
+  {
+    "name": "film_actor",
+    "schema_in": "public",
+    "schema_out": "dvd_rental",
+    "depends_on": ["film","actor"]
+  },
+  {
+    "name": "inventory",
+    "schema_in": "public",
+    "schema_out": "dvd_rental",
+    "depends_on": ["film", "store"]
+  },
+  {
+    "name": "customer",
+    "schema_in": "public",
+    "schema_out": "dvd_rental",
+    "depends_on": ["address"]
+  },
+  {
+    "name": "rental",
+    "schema_in": "public",
+    "schema_out": "dvd_rental",
+    "depends_on": ["customer", "staff", "inventory"]
+  },
+  {
+    "name": "payment",
+    "schema_in": "public",
+    "schema_out": "dvd_rental",
+    "depends_on": ["customer", "rental", "staff"]
+  }
+]
