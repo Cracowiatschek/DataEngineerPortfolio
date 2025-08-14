@@ -1,0 +1,14 @@
+# data drivers
+psycopg==3.2.9
+psycopg[binary]==3.2.9
+
+# data manipulation
+pandas==2.3.1
+polars==1.32.2
+
+# orchestration
+prefect==3.4.12
+
+# environment
+python-dotenv==1.1.1
+

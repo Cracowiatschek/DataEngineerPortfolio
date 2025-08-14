@@ -2,7 +2,7 @@ import requests
 import json
 import psycopg
 
-connection = psycopg.connect(dbname = "db_w290", user="w290", password="D4B0_942ece", host="psql01.mikr.us", port=5432)
+connection = psycopg.connect(dbname = "", user="", password="", host="..", port=5432)
 try:
     cursor = connection.cursor()
     cursor.execute("SELECT 1")
