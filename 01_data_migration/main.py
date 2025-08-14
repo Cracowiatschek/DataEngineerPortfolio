@@ -1,4 +1,4 @@
-from utills.db import create_pg_cursor
+from utills.db import create_pg_cursor, TableMetadataMismatchError
 from prefect import task, flow
 from prefect.assets import materialize
 from dotenv import load_dotenv
@@ -50,27 +50,32 @@ def check_metadata(cursor, schema:str, table_name:str) -> dict:
 
 
 @task
-def get_data(cursor, schema:str, table_name:str):
-    cursor.execute(f"SELECT * FROM {schema}.{table_name}")
-    return cursor.fetchall()
-
-
-# @task
-# def load_data(cursor, schema:str, table_name:str):
-#     cursor.execute_many(f"INSERT INTO {schema}.{table_name}")
-
-
-@task
 def migrate(queue:deque, cursor_in, cursor_out):
     try:
         while len(queue) > 0:
             item = queue.popleft()
+
+            @materialize(f"postgresql://{os.getenv("DB_LOCAL_HOST")}/{os.getenv("DB_LOCAL_NAME")}/{item.schema_in}/{item.name}")
+            def get_data(cursor, schema: str, table_name: str, columns: str):
+                cursor.execute(f"SELECT * FROM {schema}.{table_name}")
+                return cursor.fetchall()
+
+            @materialize(f"postgresql://{os.getenv("DB_VPS_HOST")}/{os.getenv("DB_VPS_NAME")}/{item.schema_out}/{item.name}")
+            def load_data(cursor, schema: str, table_name: str, columns: str, data: list):
+                vals = '%s,'*len(columns.split(','))
+                cursor.executemany(f"INSERT INTO {schema}.{table_name} ({columns}) values ()")
+
+
             input_meta = check_metadata(cursor=cursor_in, schema=item.schema_in, table_name=item.name)
-            output_meta = check_metadata(cursor=cursor_in, schema=item.schema_out, table_name=item.name)
-            if input_meta == output_meta:
-                print(f"{item.name}: {item.schema_in} -> {item.schema_out}")
-            # data = get_data(cursor=cursor_in, schema=item.schema_in, table_name=item.name)
-            # print(data)
+            output_meta = check_metadata(cursor=cursor_out, schema=item.schema_out, table_name=item.name)
+            is_ready = all([out in input_meta and input_meta[out]==output_meta[out] for out in output_meta])
+            if is_ready:
+                data = get_data(cursor=cursor_in, schema=item.schema_in, table_name=item.name).w
+                load_data(cursor=cursor_in, schema=item.schema_in, table_name=item.name, data=data)
+            else:
+                raise TableMetadataMismatchError(f"Table metadata do not match: {item.schema_in}.{item.name} vs {item.schema_out}.{item.name}")
+
+        cursor_out.commit()
     except Exception as e:
         print(e)
     finally:
@@ -78,19 +83,6 @@ def migrate(queue:deque, cursor_in, cursor_out):
         cursor_out.close()
 
 
-cfg = load_configuration(file_path=os.getenv("CONFIG_PATH"))
-q = make_queue(config=cfg)
-migrate(queue=q,
-        cursor_in=create_pg_cursor(
-            host=os.getenv("DB_LOCAL_HOST"),
-            user=os.getenv("DB_LOCAL_USER"),
-            password=os.getenv("DB_LOCAL_PASSWORD"),
-            port=int(os.getenv("DB_LOCAL_PORT")),
-            dbname=os.getenv("DB_LOCAL_DBNAME")
-        ), cursor_out=create_pg_cursor(
-            host=os.getenv("DB_LOCAL_HOST"),
-            user=os.getenv("DB_LOCAL_USER"),
-            password=os.getenv("DB_LOCAL_PASSWORD"),
-            port=int(os.getenv("DB_LOCAL_PORT")),
-            dbname=os.getenv("DB_LOCAL_DBNAME")
-        ))
+@flow
+def main():
+    pass
