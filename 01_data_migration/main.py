@@ -33,6 +33,44 @@ def make_queue(config:list[dict]) -> deque:
                 config.remove(item)
     return queue
 
+
+@task
+def get_data(cursor, schema:str, table_name:str):
+    cursor.execute(f"SELECT * FROM {schema}.{table_name}")
+    return cursor.fetchall()
+
+# @task
+# def load_data(cursor, schema:str, table_name:str):
+#     cursor.execute_many(f"INSERT INTO {schema}.{table_name}")
+
+
 @task
 def migrate(queue:deque, cursor_in, cursor_out):
-    pass
+    try:
+        while len(queue) > 0:
+            item = queue.popleft()
+            data = get_data(cursor=cursor_in, schema=item.schema_in, table_name=item.name)
+            print(data)
+    except Exception as e:
+        print(e)
+    finally:
+        cursor_in.close()
+        cursor_out.close()
+
+
+cfg = load_configuration(file_path=os.getenv("CONFIG_PATH"))
+q = make_queue(config=cfg)
+migrate(queue=q,
+        cursor_in=create_pg_cursor(
+            host=os.getenv("DB_LOCAL_HOST"),
+            user=os.getenv("DB_LOCAL_USER"),
+            password=os.getenv("DB_LOCAL_PASSWORD"),
+            port=int(os.getenv("DB_LOCAL_PORT")),
+            dbname=os.getenv("DB_LOCAL_DBNAME")
+        ), cursor_out=create_pg_cursor(
+            host=os.getenv("DB_LOCAL_HOST"),
+            user=os.getenv("DB_LOCAL_USER"),
+            password=os.getenv("DB_LOCAL_PASSWORD"),
+            port=int(os.getenv("DB_LOCAL_PORT")),
+            dbname=os.getenv("DB_LOCAL_DBNAME")
+        ))
