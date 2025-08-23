@@ -67,11 +67,11 @@ def make_migration():
     queue = make_queue(config)
     while len(queue) > 0:
         item = queue.popleft()
-        base_migration.with_options(
+        migration_task = base_migration.with_options(
             assets=[f"postgres://{os.getenv("DB_VPS_HOST")}/{os.getenv("DB_VPS_NAME")}/{item.schema_out}/{item.name}"],
             asset_deps=[f"postgres://{os.getenv("DB_LOCAL_HOST")}/{os.getenv("DB_LOCAL_NAME")}/{item.schema_in}/{item.name}"]
         )
-        base_migration(item)
+        migration_task(item)
 
 if __name__ == '__main__':
     make_migration()
