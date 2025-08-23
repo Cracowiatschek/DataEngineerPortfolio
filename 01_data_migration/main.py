@@ -50,7 +50,7 @@ def migrate(item:Object):
                                 port=int(os.getenv("DB_VPS_PORT"))) as v_connect:
                 placeholders = ", ".join(["%s"] * len(colnames))
                 col_str = ", ".join(colnames)
-                query = f"insert into {item.schema_out}.{item.name} ({col_str}) values ({placeholders})"
+                query = f"insert into {item.schema_out}.{item.name} ({col_str}) overriding system value values ({placeholders})"
 
                 vps=v_connect.cursor()
                 vps.executemany(query, data)
