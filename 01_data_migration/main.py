@@ -1,4 +1,4 @@
-from utills.db import create_pg_cursor, TableMetadataMismatchError
+from utills.db import create_pg_conn, TableMetadataMismatchError
 from prefect import task, flow, get_run_logger
 from prefect.assets import materialize
 from dotenv import load_dotenv
@@ -37,17 +37,17 @@ def make_queue(config:list[dict]) -> deque:
 def migrate(item:Object):
     logger = get_run_logger()
     try:
-        with create_pg_cursor(host=os.getenv("DB_LOCAL_HOST"),  user=os.getenv("DB_LOCAL_USER"),
-                              password=os.getenv("DB_LOCAL_PASSWORD"), dbname=os.getenv("DB_LOCAL_NAME"),
-                              port=int(os.getenv("DB_LOCAL_PORT"))) as connect:
+        with create_pg_conn(host=os.getenv("DB_LOCAL_HOST"), user=os.getenv("DB_LOCAL_USER"),
+                            password=os.getenv("DB_LOCAL_PASSWORD"), dbname=os.getenv("DB_LOCAL_NAME"),
+                            port=int(os.getenv("DB_LOCAL_PORT"))) as connect:
             local=connect.cursor()
             local.execute(f"select * from {item.schema_in}.{item.name}")
             data=local.fetchall()
             colnames=[desc[0] for desc in local.description]
 
-            with create_pg_cursor(host=os.getenv("DB_VPS_HOST"), user=os.getenv("DB_VPS_USER"),
-                                  password=os.getenv("DB_VPS_PASSWORD"), dbname=os.getenv("DB_VPS_NAME"),
-                                  port=int(os.getenv("DB_VPS_PORT"))) as v_connect:
+            with create_pg_conn(host=os.getenv("DB_VPS_HOST"), user=os.getenv("DB_VPS_USER"),
+                                password=os.getenv("DB_VPS_PASSWORD"), dbname=os.getenv("DB_VPS_NAME"),
+                                port=int(os.getenv("DB_VPS_PORT"))) as v_connect:
                 placeholders = ", ".join(["%s"] * len(colnames))
                 col_str = ", ".join(colnames)
                 query = f"insert into {item.schema_out}.{item.name} ({col_str}) values ({placeholders})"
