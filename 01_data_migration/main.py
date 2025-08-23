@@ -1,5 +1,5 @@
 from utills.db import create_pg_cursor, TableMetadataMismatchError
-from prefect import task, flow
+from prefect import task, flow, get_run_logger
 from prefect.assets import materialize
 from dotenv import load_dotenv
 from collections import deque, namedtuple
@@ -8,11 +8,7 @@ import os
 
 
 load_dotenv()
-
-@task
-def create_connection(host:str, user:str, password:str, dbname:str, port:int):
-    return create_pg_cursor(host, user, password, dbname, port)
-
+Object=namedtuple("Object", ["name", "schema_in", "schema_out"])
 
 @task
 def load_configuration(file_path:str) -> list:
@@ -23,7 +19,6 @@ def load_configuration(file_path:str) -> list:
 @task
 def make_queue(config:list[dict]) -> deque:
     queue=deque()
-    Object=namedtuple("Object", ["name", "schema_in", "schema_out"])
 
     while len(config) > 0:
         for item in config:
@@ -34,55 +29,49 @@ def make_queue(config:list[dict]) -> deque:
     return queue
 
 
-@task
-def check_metadata(cursor, schema:str, table_name:str) -> dict:
-    cursor.execute(f"""
-        SELECT column_name, data_type 
-        FROM information_schema.columns 
-        WHERE table_schema = '{schema}'
-        AND table_name = '{table_name}'
-        ORDER BY ordinal_position
-    """)
-    meta = {}
-    for row in cursor.fetchall():
-        meta[row[0]] = row[1]
-    return meta
 
-
-@task
-def migrate(queue:deque, cursor_in, cursor_out):
+@materialize
+def migrate(item:Object):
+    logger = get_run_logger()
     try:
-        while len(queue) > 0:
-            item = queue.popleft()
+        with create_pg_cursor(host=os.getenv("DB_LOCAL_HOST"),  user=os.getenv("DB_LOCAL_USER"),
+                              password=os.getenv("DB_LOCAL_PASSWORD"), dbname=os.getenv("DB_LOCAL_NAME"),
+                              port=int(os.getenv("DB_LOCAL_PORT"))) as connect:
+            local=connect.cursor()
+            local.execute(f"select * from {item.schema_in}.{item.name}")
+            data=local.fetchall()
+            colnames=[desc[0] for desc in local.description]
 
-            @materialize(f"postgresql://{os.getenv("DB_LOCAL_HOST")}/{os.getenv("DB_LOCAL_NAME")}/{item.schema_in}/{item.name}")
-            def get_data(cursor, schema: str, table_name: str, columns: str):
-                cursor.execute(f"SELECT * FROM {schema}.{table_name}")
-                return cursor.fetchall()
+            with create_pg_cursor(host=os.getenv("DB_VPS_HOST"), user=os.getenv("DB_VPS_USER"),
+                                  password=os.getenv("DB_VPS_PASSWORD"), dbname=os.getenv("DB_VPS_NAME"),
+                                  port=int(os.getenv("DB_VPS_PORT"))) as v_connect:
+                placeholders = ", ".join(["%s"] * len(colnames))
+                col_str = ", ".join(colnames)
+                query = f"insert into {item.schema_out}.{item.name} ({col_str}) values ({placeholders})"
 
-            @materialize(f"postgresql://{os.getenv("DB_VPS_HOST")}/{os.getenv("DB_VPS_NAME")}/{item.schema_out}/{item.name}")
-            def load_data(cursor, schema: str, table_name: str, columns: str, data: list):
-                vals = '%s,'*len(columns.split(','))
-                cursor.executemany(f"INSERT INTO {schema}.{table_name} ({columns}) values ()")
-
-
-            input_meta = check_metadata(cursor=cursor_in, schema=item.schema_in, table_name=item.name)
-            output_meta = check_metadata(cursor=cursor_out, schema=item.schema_out, table_name=item.name)
-            is_ready = all([out in input_meta and input_meta[out]==output_meta[out] for out in output_meta])
-            if is_ready:
-                data = get_data(cursor=cursor_in, schema=item.schema_in, table_name=item.name).w
-                load_data(cursor=cursor_in, schema=item.schema_in, table_name=item.name, data=data)
-            else:
-                raise TableMetadataMismatchError(f"Table metadata do not match: {item.schema_in}.{item.name} vs {item.schema_out}.{item.name}")
-
-        cursor_out.commit()
+                vps=v_connect.cursor()
+                vps.executemany(query, data)
+                logger.info(f"Inserted {len(data)} rows into {item.schema_out}.{item.name} from {item.schema_in}.{item.name}.")
     except Exception as e:
-        print(e)
-    finally:
-        cursor_in.close()
-        cursor_out.close()
+        logger.error(e)
+        v_connect.rollback()
+        raise
+
 
 
 @flow
-def main():
-    pass
+def make_migration():
+    base_migration = migrate
+
+    config = load_configuration(os.getenv("CONFIG_PATH"))
+    queue = make_queue(config)
+    while len(queue) > 0:
+        item = queue.popleft()
+        base_migration.with_options(
+            assets=[f"postgres://{os.getenv("DB_VPS_HOST")}/{os.getenv("DB_VPS_NAME")}/{item.schema_out}/{item.name}"],
+            asset_deps=[f"postgres://{os.getenv("DB_LOCAL_HOST")}/{os.getenv("DB_LOCAL_NAME")}/{item.schema_in}/{item.name}"]
+        )
+        base_migration(item)
+
+if __name__ == '__main__':
+    make_migration()
