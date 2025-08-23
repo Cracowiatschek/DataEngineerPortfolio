@@ -46,9 +46,9 @@ File was loaded from json as list of dict.
 #### 1.3.2. Create migration queue *@task*
 A queue was created from the configuration list so that tables without dependencies were migrated first, and then, as dependencies were added, the remaining tables were migrated.
 
-#### 1.3.3. Migration
+#### 1.3.3. Migration *@task*
 The migration consisted of downloading the table contents from localhost and then inserting the contents according to the list of columns retrieved from the metadata in batch form.
 In case of an error, the table migration was interrupted and a rollback was performed for the given table.
 
-#### 1.3.4. Run Flow with Prefect
+#### 1.3.4. Run Flow with Prefect *@flow*
 
