@@ -30,7 +30,10 @@ def make_queue(config:list[dict]) -> deque:
 
 
 
-@materialize
+@materialize(
+    f"postgres://{os.getenv("DB_VPS_HOST")}/{os.getenv("DB_VPS_NAME")}/output_schema/table",
+    asset_deps=[f"postgres://{os.getenv("DB_LOCAL_HOST")}/{os.getenv("DB_LOCAL_NAME")}/input_schema/table"]
+)
 def migrate(item:Object):
     logger = get_run_logger()
     try:
