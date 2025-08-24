@@ -1,4 +1,5 @@
 import psycopg
+from pymongo import MongoClient
 
 
 def create_pg_conn(host: str, user: str, password: str, dbname: str, port: int=5432):
@@ -9,3 +10,9 @@ def create_pg_conn(host: str, user: str, password: str, dbname: str, port: int=5
 class TableMetadataMismatchError(Exception):
     """Raised when source and target table metadata do not match."""
     pass
+
+
+def create_mongo_conn(host: str, user: str, password: str, dbname: str, port: int=27017):
+    uri = f"mongodb://{user}:{password}@{host}:{port}/{dbname}"
+    connect = MongoClient(uri)
+    return connect
