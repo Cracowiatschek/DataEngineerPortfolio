@@ -1,0 +1,3 @@
+REFRESH MATERIALIZED VIEW CONCURRENTLY v_dvd_rental.customers_mv;
+REFRESH MATERIALIZED VIEW CONCURRENTLY v_dvd_rental.last_rentals_mv;
+REFRESH MATERIALIZED VIEW CONCURRENTLY v_dvd_rental.customer_aggr_mv;
