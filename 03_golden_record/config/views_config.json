@@ -1,0 +1,108 @@
+[
+  {
+    "schema": "v_dvd_rental",
+    "materialized_view": "customers_mv",
+    "sources": [
+      {
+        "schema": "dvd_rental",
+        "table": "customer"
+      }, {
+        "schema": "dvd_rental",
+        "table": "address"
+      }, {
+        "schema": "dvd_rental",
+        "table": "city"
+      }, {
+        "schema": "dvd_rental",
+        "table": "country"
+      }, {
+        "schema": "dvd_rental",
+        "table": "store"
+      }, {
+        "schema": "dvd_rental",
+        "table": "staff"
+      }
+    ]
+  }, {
+    "schema": "v_dvd_rental",
+    "materialized_view": "last_rentals_mv",
+    "sources": [
+      {
+        "schema": "dvd_rental",
+        "table": "customer"
+      }, {
+        "schema": "dvd_rental",
+        "table": "payment"
+      }, {
+        "schema": "dvd_rental",
+        "table": "inventory"
+      }, {
+        "schema": "dvd_rental",
+        "table": "film"
+      }, {
+        "schema": "dvd_rental",
+        "table": "film_category"
+      }, {
+        "schema": "dvd_rental",
+        "table": "category"
+      }, {
+        "schema": "dvd_rental",
+        "table": "store"
+      }, {
+        "schema": "dvd_rental",
+        "table": "address"
+      }, {
+        "schema": "dvd_rental",
+        "table": "city"
+      }, {
+        "schema": "dvd_rental",
+        "table": "country"
+      }
+    ]
+  }, {
+    "schema": "v_dvd_rental",
+    "materialized_view": "customer_aggr_mv",
+    "sources": [
+      {
+        "schema": "dvd_rental",
+        "table": "customer"
+      }, {
+        "schema": "dvd_rental",
+        "table": "payment"
+      }, {
+        "schema": "dvd_rental",
+        "table": "inventory"
+      }, {
+        "schema": "dvd_rental",
+        "table": "film"
+      }, {
+        "schema": "dvd_rental",
+        "table": "film_category"
+      }, {
+        "schema": "dvd_rental",
+        "table": "category"
+      }, {
+        "schema": "dvd_rental",
+        "table": "store"
+      }, {
+        "schema": "dvd_rental",
+        "table": "address"
+      }, {
+        "schema": "dvd_rental",
+        "table": "city"
+      }, {
+        "schema": "dvd_rental",
+        "table": "country"
+      }, {
+        "schema": "dvd_rental",
+        "table": "category"
+      }, {
+        "schema": "dvd_rental",
+        "table": "film_actor"
+      }, {
+        "schema": "dvd_rental",
+        "table": "actor"
+      }
+    ]
+  }
+]
