@@ -12,6 +12,11 @@ class TableMetadataMismatchError(Exception):
     pass
 
 
+class NotAllViewsRefreshed(Exception):
+    """Raised when not all views are refreshed."""
+    pass
+
+
 def create_mongo_conn(host: str, user: str, password: str, dbname: str, port: int=27017):
     uri = f"mongodb://{user}:{password}@{host}:{port}/{dbname}"
     connect = MongoClient(uri)
