@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from typing import Any
 from config.JSONConfig import JSONConfig
-from utills.db import create_mongo_conn, create_pg_conn, NotAllViewsRefreshed
+from utills.db import create_pg_conn, NotAllViewsRefreshed
 from prefect import task, flow, get_run_logger
 from prefect.assets import materialize
 from dotenv import load_dotenv

@@ -13,4 +13,9 @@ client = create_mongo_conn(host=os.getenv("DB_MONGO_HOST"), user=os.getenv("DB_M
 
 database=client[os.getenv("DB_MONGO_NAME")]
 database.create_collection('CustomersGoldenRecord')
+collection=database['CustomersGoldenRecord']
+collection.create_index([("first_name",1), ("last_name",1)])
+collection.create_index([("email",1)])
+collection.create_index([("phone",1)])
+
 client.close()

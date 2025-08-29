@@ -2,7 +2,7 @@ create schema v_dvd_rental;
 
 create materialized view v_dvd_rental.customers_mv as
 select c.customer_id, c.first_name, c.last_name, case when c.active = 1 then true else false end is_active, 
-a.address, a.district,ct.city, ctr.country, trim(a.address)||' '||trim(ct.city)||', '||trim(ctr.country)||' ('||trim(a.district)||')' full_address, 
+a.address, a.district,ct.city, ctr.country, trim(a.address)||', '||trim(ct.city)||', '||trim(ctr.country)||' ('||trim(a.district)||')' full_address,
 a.phone, c.email, a.postal_code, 
 sf.first_name as assistant_name, sf.last_name as assistant_last_name, sf.email as assistant_email,
 now() last_refresh_date
@@ -21,7 +21,7 @@ with rentals as (
 	select r.rental_id, r.customer_id, f.title, ct.name category, coalesce(p.amount, f.rental_rate) as amount, r.rental_date, r.return_date, 
 	extract(day from age(coalesce(r.return_date, now()), r.rental_date)) rental_duration, case when r.return_date is not null then true else false end is_completed,
 	case when extract(day from age(coalesce(r.return_date, now()), r.rental_date)) > f.rental_duration then true else false end is_overdue,
-	trim(a.address)||' '||trim(ca.city)||', '||trim(ctr.country)||' ('||trim(a.district)||')' as store, row_number() over(partition by r.customer_id order by rental_date desc) rental_cnt
+	trim(a.address)||', '||trim(ca.city)||', '||trim(ctr.country)||' ('||trim(a.district)||')' as store, row_number() over(partition by r.customer_id order by rental_date desc) rental_cnt
 	from dvd_rental.rental r 
 	left join dvd_rental.customer c on r.customer_id = c.customer_id
 	left join dvd_rental.payment p on r.rental_id = p.rental_id 
@@ -90,6 +90,7 @@ select r.customer_id, sum(r.is_overdue)*100/count(1) overdue_score,
 	sum(r.amount) lifetime_value,
 	count(1) total_rental_count,
 	cast(avg(r.rental_duration) as numeric(10,2)) average_rental_duration,
+	cast(avg(r.amount) as numeric(10,2)) average_rental_payment,
 	cast(avg(r.length) as numeric(10,2)) average_film_duration,
 	sum(case when r.rental_date >= now() - interval '1 year' then 1 else 0 end) last_year_rental_count,
 	sum(case when r.rental_date >= now() - interval '1 year' then r.amount else 0 end) last_year_payments_sum,
