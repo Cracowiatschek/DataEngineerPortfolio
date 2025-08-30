@@ -9,7 +9,6 @@ from geopy.geocoders import Nominatim
 import time
 
 
-
 PG_HOST:str = Secret.load("pg-host").get()
 PG_USER:str = Secret.load("pg-user").get()
 PG_PASSWORD:str = Secret.load("pg-password").get()
