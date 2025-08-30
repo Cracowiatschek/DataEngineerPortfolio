@@ -1,18 +1,20 @@
-import os
-import io
 from typing import List
 from utills.db import create_pg_conn
 from prefect import task, flow, get_run_logger
 from prefect.blocks.system import String
 from prefect.assets import materialize
-from dotenv import load_dotenv
+from prefect.blocks.system import Secret
 from collections import deque, namedtuple
 from geopy.geocoders import Nominatim
 import time
 
 
-load_dotenv()
 
+PG_HOST:str = Secret.load("pg-host").get()
+PG_USER:str = Secret.load("pg-user").get()
+PG_PASSWORD:str = Secret.load("pg-password").get()
+PG_PORT:int = Secret.load("pg-port").get()
+PG_DBNAME:str = Secret.load("pg-dbname").get()
 
 City = namedtuple("City", ["id", "city", "country", "longitude", "latitude"])
 
@@ -23,9 +25,7 @@ def get_cities_without_coordinates():
     query = String.load("cities-without-coordinates").value
 
     try:
-        with create_pg_conn(host=os.getenv("DB_PG_HOST"), user=os.getenv("DB_PG_USER"),
-                            password=os.getenv("DB_PG_PASSWORD"), dbname=os.getenv("DB_PG_NAME"),
-                            port=int(os.getenv("DB_PG_PORT"))) as conn:
+        with create_pg_conn(host=PG_HOST, user=PG_USER, password=PG_PASSWORD, dbname=PG_DBNAME, port=PG_PORT) as conn:
             cursor = conn.cursor()
             cursor.execute(query)
             result = cursor.fetchall() # select c.city_id, c.city, ctr.country
@@ -50,7 +50,7 @@ def make_queue(query_result)-> deque:
 def get_coordinates(cities: deque[City]) -> List[City]:
     logger = get_run_logger()
     coordinates = []
-    geolocator = Nominatim(user_agent=f"{os.getenv("DB_PG_USER")}_agent")
+    geolocator = Nominatim(user_agent=f"{PG_USER}_agent")
 
     while len(cities) > 0:
         city = cities.popleft()
@@ -70,7 +70,7 @@ def get_coordinates(cities: deque[City]) -> List[City]:
 
 
 @materialize(
-    f"postgres://{os.getenv("DB_PG_HOST")}/{os.getenv("DB_PG_NAME")}/dvd_rental/city",
+    f"postgres://{PG_HOST}/{PG_DBNAME}/dvd_rental/city",
     asset_deps=[f"postgres://localhost/postgres/public/city" ,f"https://nominatim.openstreetmap.org/search"]
 )
 def save_coordinates(coordinates: List[City]) -> None:
@@ -82,9 +82,7 @@ def save_coordinates(coordinates: List[City]) -> None:
     logger.info(f"Updating query:\n {update_query}")
 
     try:
-        with create_pg_conn(host=os.getenv("DB_PG_HOST"), user=os.getenv("DB_PG_USER"),
-                            password=os.getenv("DB_PG_PASSWORD"), dbname=os.getenv("DB_PG_NAME"),
-                            port=int(os.getenv("DB_PG_PORT"))) as conn:
+        with create_pg_conn(host=PG_HOST, user=PG_USER, password=PG_PASSWORD, dbname=PG_DBNAME, port=PG_PORT) as conn:
             cursor = conn.cursor()
             cursor.execute(create_query) # create tmp_cities (city_id int, longtiude float, latiude float)
 
