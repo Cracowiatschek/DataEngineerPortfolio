@@ -5,13 +5,13 @@ My basic tech stack are **<a href="https://www.python.org/">Python</a>, <a href=
 Basic dataset was PostgreSQL: <a href="https://neon.com/postgresql/postgresql-getting-started/postgresql-sample-database"> dvd_rental.tar </a>.
 
 ## Project List
-| id | name                   | description                                                                                         | status | path                                     |
-|----|------------------------|-----------------------------------------------------------------------------------------------------|--------|------------------------------------------|
-| 1. | Data Migration         | Data migration from localhost to instance on VPS.                                                   | ✅      | [/01_data_migration](https://github.com/Cracowiatschek/DataEngineerPortfolio/tree/master/01_data_migration) |
-| 2. | Data Mixing            | Daily data transformation, obtaining diffrent results every day while maintaining data consistnecy. | 💤     |                                          |
-| 3. | Golden Record          | Daily data migration from PostgreSQL to mongoDB and create Golden Record for every customer.        | 🛠️    |                                          |
-| 4. | Dashboard              | Dashbord with store sales result                                                                    | 💤     |                                          |
-| 5. | Get data from internet | Daily geting data from API and store them in PostgreSQL.                                            | 💤     |                                          |
+| id | name                   | description                                                                                         | status | path                                                                                                                        |
+|----|------------------------|-----------------------------------------------------------------------------------------------------|--------|-----------------------------------------------------------------------------------------------------------------------------|
+| 1. | Data Migration         | Data migration from localhost to instance on VPS.                                                   | ✅      | [/01_data_migration](https://github.com/Cracowiatschek/DataEngineerPortfolio/tree/master/01_data_migration)                 |
+| 2. | Data Mixing            | Daily data transformation, obtaining diffrent results every day while maintaining data consistnecy. | 💤     |                                                                                                                             |
+| 3. | Golden Record          | Daily data migration from PostgreSQL to mongoDB and create Golden Record for every customer.        | 🛠️    |                                                                                                                             |
+| 4. | Dashboard              | Dashbord with store sales result                                                                    | 💤     |                                                                                                                             |
+| 5. | Get data from internet | Daily geting data from API and store them in PostgreSQL.                                            | ✅       | [/05_get_data_from_internet](https://github.com/Cracowiatschek/DataEngineerPortfolio/tree/master/05_get_data_from_internet) |
 
 ## 1. Data Migration
 This is initializing my all projects. My target was having access to sample dataset from any devices to training for me and my wife. \
