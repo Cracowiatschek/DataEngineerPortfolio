@@ -1,4 +1,4 @@
-from utills.db import create_pg_conn, TableMetadataMismatchError
+from utills.db import create_pg_conn
 from prefect import task, flow, get_run_logger
 from prefect.assets import materialize
 from dotenv import load_dotenv
