@@ -1,16 +1,16 @@
 from datetime import datetime
 from typing import List, Optional
-from pydantic import BaseModel, confloat, EmailStr
+from pydantic import BaseModel, confloat, EmailStr, conint
 
 
 class GoldenRental(BaseModel):
     _id = int
     title: str
     category: str
-    amount: float
+    amount: confloat(ge=0)
     rental_date: datetime
     return_date: Optional[datetime]
-    rental_duration: int
+    rental_duration: conint(ge=0)
     is_completed: bool
     is_overdue: bool
     store: str
@@ -40,18 +40,18 @@ class GoldenCustomer(BaseModel):
     postal_code: Optional[str]
     assistant_name: str
     assistant_email: str
-    overdue_score: int
+    overdue_score: conint(ge=0, le=100)
     most_recent_store: Optional[str]
     last_rental_film: Optional[str]
     last_rental_date: Optional[str]
-    lifetime_value: float = 0.00
-    total_rental_count: int = 0
-    average_rental_duration: float = 0.00
-    average_rental_payment: float = 0.00
-    average_film_duration: float = 0.00
-    last_year_rental_count: int = 0
-    last_year_payments_sum: float = 0.00
-    last_payment: float = 0.00
+    lifetime_value: confloat(ge=0) = 0.00
+    total_rental_count: conint(ge=0) = 0
+    average_rental_duration: confloat(ge=0, le=500)  = 0.00
+    average_rental_payment: confloat(ge=0) = 0.00
+    average_film_duration: confloat(ge=0) = 0.00
+    last_year_rental_count: conint(ge=0) = 0
+    last_year_payments_sum: confloat(ge=0) = 0.00
+    last_payment: confloat(ge=0) = 0.00
     most_recent_film_category: Optional[str]
     second_most_recent_film_category: Optional[str]
     third_most_recent_film_category: Optional[str]

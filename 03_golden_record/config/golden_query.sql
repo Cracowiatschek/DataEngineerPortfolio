@@ -3,7 +3,7 @@ select cm.customer_id _id, cm.first_name, cm.last_name, cm.is_active,
 	cm.latitude, cm.longitude,
 	cm.phone, cm.email, cm.postal_code,
 	cm.assistant_name||' '||cm.assistant_last_name assistant_name,
-	cm.assistant_email, 
+	cm.assistant_email,
 	cam.overdue_score, cam.most_recent_store, cam.last_rental_film,
 	cam.last_rental_date, cam.lifetime_value, cam.total_rental_count,
 	cam.average_rental_duration, cam.average_rental_payment, cam.average_film_duration,
@@ -21,14 +21,16 @@ select cm.customer_id _id, cm.first_name, cm.last_name, cm.is_active,
 			'rental_duration', lrm.rental_duration,
 			'is_completed', lrm.is_completed,
 			'is_overdue', lrm.is_overdue,
-			'store', lrm.store 
+			'store', lrm.store
 		)
-	)
-from v_dvd_rental.customers_mv cm 
+	),
+	string_agg(cast(lrm.rental_id as varchar(10)), ', ') _ids_rental
+from v_dvd_rental.customers_mv cm
 left join v_dvd_rental.customer_aggr_mv cam on cm.customer_id = cam.customer_id
-left join v_dvd_rental.last_rentals_mv lrm on cm.customer_id = lrm.customer_id 
+left join v_dvd_rental.last_rentals_mv lrm on cm.customer_id = lrm.customer_id
 group by cm.customer_id, cm.first_name, cm.last_name, cm.is_active,
 cm.full_address, cm.address, cm.district, cm.city, cm.country,
+cm.latitude, cm.longitude,
 cm.phone, cm.email, cm.postal_code, 
 cm.assistant_name ,cm.assistant_last_name,
 cm.assistant_email, 
