@@ -18,13 +18,14 @@ class GoldenRental(BaseModel):
 
 class Source(BaseModel):
     _id: int
+    sub_id: Optional[List[int]]
     path: str
     fields: List[str]
     last_refreshed: datetime
 
 
 class GoldenCustomer(BaseModel):
-    _id: int
+    id: int
     first_name: str
     last_name: str
     is_active: bool
@@ -43,7 +44,7 @@ class GoldenCustomer(BaseModel):
     overdue_score: conint(ge=0, le=100)
     most_recent_store: Optional[str]
     last_rental_film: Optional[str]
-    last_rental_date: Optional[str]
+    last_rental_date: Optional[datetime]
     lifetime_value: confloat(ge=0) = 0.00
     total_rental_count: conint(ge=0) = 0
     average_rental_duration: confloat(ge=0, le=500)  = 0.00
