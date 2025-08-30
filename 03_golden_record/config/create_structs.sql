@@ -2,7 +2,7 @@ create schema v_dvd_rental;
 
 create materialized view v_dvd_rental.customers_mv as
 select c.customer_id, c.first_name, c.last_name, case when c.active = 1 then true else false end is_active, 
-a.address, a.district,ct.city, ctr.country, trim(a.address)||', '||trim(ct.city)||', '||trim(ctr.country)||' ('||trim(a.district)||')' full_address,
+a.address, a.district,ct.city, ct.longitude, ct.latitude, ctr.country, trim(a.address)||', '||trim(ct.city)||', '||trim(ctr.country)||' ('||trim(a.district)||')' full_address,
 a.phone, c.email, a.postal_code, 
 sf.first_name as assistant_name, sf.last_name as assistant_last_name, sf.email as assistant_email,
 now() last_refresh_date

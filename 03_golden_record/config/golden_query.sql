@@ -1,6 +1,7 @@
 select cm.customer_id _id, cm.first_name, cm.last_name, cm.is_active,
 	cm.full_address, cm.address, cm.district, cm.city, cm.country,
-	cm.phone, cm.email, cm.postal_code, 
+	cm.latitude, cm.longitude,
+	cm.phone, cm.email, cm.postal_code,
 	cm.assistant_name||' '||cm.assistant_last_name assistant_name,
 	cm.assistant_email, 
 	cam.overdue_score, cam.most_recent_store, cam.last_rental_film,

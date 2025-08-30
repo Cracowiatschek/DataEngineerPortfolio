@@ -25,8 +25,13 @@ def get_data():
 
     query = String.load("daily-report-query").value
 
-    with create_pg_conn(host=os.getenv("DB_PG_HOST"), user=os.getenv("DB_PG_USER"),
+    connection = create_pg_conn(host=os.getenv("DB_PG_HOST"), user=os.getenv("DB_PG_USER"),
                         password=os.getenv("DB_PG_PASSWORD"), dbname=os.getenv("DB_PG_NAME"),
-                        port=int(os.getenv("db_pg_port"))) as conn:
-        cursor = conn.cursor()
-        cursor.execute(query)
+                        port=int(os.getenv("DB_PG_PORT")))
+    cursor = connection.cursor()
+    cursor.execute(query)
+
+    return cursor
+
+
+@task
