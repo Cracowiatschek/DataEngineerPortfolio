@@ -70,7 +70,7 @@ def get_coordinates(cities: deque[City]) -> List[City]:
 
 @materialize(
     f"postgres://{PG_HOST}/{PG_DBNAME}/dvd_rental/city",
-    asset_deps=[f"postgres://localhost/postgres/public/city" ,f"https://nominatim.openstreetmap.org/search"]
+    asset_deps=[f"postgres://localhost/postgres/public/city", f"https://nominatim.openstreetmap.org/search"]
 )
 def save_coordinates(coordinates: List[City]) -> None:
     logger = get_run_logger()
