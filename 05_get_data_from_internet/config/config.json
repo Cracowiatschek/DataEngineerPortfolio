@@ -1,0 +1,7 @@
+{
+  "schema": "dvd_rental",
+  "table": "city",
+  "longitude": "longitude",
+  "latitude": "latitude",
+  "is_set": "is_set"
+}
