@@ -1,7 +1,13 @@
 import collections
 import collections.abc
 
-collections.MutableMapping = collections.abc.MutableMapping
+if not hasattr(collections, "Mapping"):
+    collections.Mapping = collections.abc.Mapping
+if not hasattr(collections, "MutableMapping"):
+    collections.MutableMapping = collections.abc.MutableMapping
+if not hasattr(collections, "Sequence"):
+    collections.Sequence = collections.abc.Sequence
+
 
 import psycopg
 from pymongo import MongoClient
