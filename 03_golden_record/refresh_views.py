@@ -5,11 +5,16 @@ from config.JSONConfig import JSONConfig
 from utills.db import create_pg_conn, NotAllViewsRefreshed
 from prefect import task, flow, get_run_logger
 from prefect.assets import materialize
-from dotenv import load_dotenv
+from prefect.blocks.system import Secret
 from collections import deque, namedtuple
 
 
-load_dotenv()
+PG_HOST:str = Secret.load("pg-host").get()
+PG_USER:str = Secret.load("pg-user").get()
+PG_PASSWORD:str = Secret.load("pg-password").get()
+PG_PORT:int = Secret.load("pg-port").get()
+PG_DBNAME:str = Secret.load("pg-dbname").get()
+
 
 MaterializedView = namedtuple("MaterializedView", ["schema", "view_name", "sources"])
 Source = namedtuple("Source", ["schema", "table_name"])
@@ -25,9 +30,7 @@ def make_queue(config: list[dict[str, Any]]) -> deque:
 @task
 def get_refresh_datetime(view:MaterializedView) -> datetime:
     try:
-        with create_pg_conn(host=os.getenv("DB_PG_HOST"), user=os.getenv("DB_PG_USER"),
-                            password=os.getenv("DB_PG_PASSWORD"), dbname=os.getenv("DB_PG_NAME"),
-                            port=int(os.getenv("DB_PG_PORT"))) as connect:
+        with create_pg_conn(host=PG_HOST, user=PG_USER, password=PG_PASSWORD, dbname=PG_DBNAME, port=PG_PORT) as connect:
             cursor = connect.cursor()
             cursor.execute(f"SELECT MAX(last_refresh_date) FROM {view.schema}.{view.view_name}")
             result = cursor.fetchone()
@@ -44,9 +47,7 @@ def get_refresh_datetime(view:MaterializedView) -> datetime:
 def refresh_view(view:MaterializedView):
     logger = get_run_logger()
     try:
-        with create_pg_conn(host=os.getenv("DB_PG_HOST"), user=os.getenv("DB_PG_USER"),
-                            password=os.getenv("DB_PG_PASSWORD"), dbname=os.getenv("DB_PG_NAME"),
-                            port=int(os.getenv("DB_PG_PORT"))) as connect:
+        with create_pg_conn(host=PG_HOST, user=PG_USER, password=PG_PASSWORD, dbname=PG_DBNAME, port=PG_PORT) as connect:
             cursor = connect.cursor()
             cursor.execute(f"REFRESH MATERIALIZED VIEW {view.schema}.{view.view_name}")
             logger.info(f"Refreshed view {view.schema}.{view.view_name}")
