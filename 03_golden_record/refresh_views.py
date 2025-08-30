@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 from typing import Any
 from config.JSONConfig import JSONConfig
@@ -41,8 +40,8 @@ def get_refresh_datetime(view:MaterializedView) -> datetime:
 
 
 @materialize(
-    f"postgres://{os.getenv("DB_PG_HOST")}/{os.getenv("DB_PG_NAME")}/output_schema/table",
-    asset_deps=[f"postgres://{os.getenv("DB_PG_HOST")}/{os.getenv("DB_PG_NAME")}/input_schema/table"]
+    f"postgres://{PG_HOST}/{PG_DBNAME}/output_schema/table",
+    asset_deps=[f"postgres://{PG_HOST}/{PG_DBNAME}/input_schema/table"]
 )
 def refresh_view(view:MaterializedView):
     logger = get_run_logger()
@@ -80,9 +79,9 @@ def refresh_views():
         item = queue.popleft()
         datetime_to_check["before"].append(get_refresh_datetime(item))
         refresh_task = base_refresh.with_options(
-            assets=[f"postgres://{os.getenv("DB_PG_HOST")}/{os.getenv("DB_PG_NAME")}/{item.schema}/{item.view_name}"],
+            assets=[f"postgres://{PG_USER}/{PG_DBNAME}/{item.schema}/{item.view_name}"],
             asset_deps=[
-                f"postgres://{os.getenv("DB_PG_HOST")}/{os.getenv("DB_PG_NAME")}/{i.schema}/{i.table_name}" for i in item.sources
+                f"postgres://{PG_USER}/{PG_DBNAME}/{i.schema}/{i.table_name}" for i in item.sources
             ]
         )
         refresh_task(item)
