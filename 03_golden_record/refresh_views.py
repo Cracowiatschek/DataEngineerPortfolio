@@ -79,9 +79,9 @@ def refresh_views():
         item = queue.popleft()
         datetime_to_check["before"].append(get_refresh_datetime(item))
         refresh_task = base_refresh.with_options(
-            assets=[f"postgres://{PG_USER}/{PG_DBNAME}/{item.schema}/{item.view_name}"],
+            assets=[f"postgres://{PG_HOST}/{PG_USER}/{PG_DBNAME}/{item.schema}/{item.view_name}"],
             asset_deps=[
-                f"postgres://{PG_USER}/{PG_DBNAME}/{i.schema}/{i.table_name}" for i in item.sources
+                f"postgres://{PG_HOST}/{PG_USER}/{PG_DBNAME}/{i.schema}/{i.table_name}" for i in item.sources
             ]
         )
         refresh_task(item)
