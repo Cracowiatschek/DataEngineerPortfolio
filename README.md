@@ -61,6 +61,8 @@ Project has two steps:
 
 On the platform Prefect Cloud I set rule if flow with refresh views has Failed or Crashed status, next flow with Golden Record upsert waiting for manual restart earlier process.
 
+![](/assets/03_flows.png)
+
 **Tech stack:**
 * Python <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/community/logos/python-logo-only.png" height="15">
 * PostgreSQL <img src="https://www.postgresql.org/media/img/about/press/elephant.png" height="15">
