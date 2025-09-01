@@ -1,23 +1,17 @@
-from prefect import flow, task
-import random
+from pymongo import MongoClient
+import dotenv
+import os
 
-@task
-def get_customer_ids() -> list[str]:
-    # Fetch customer IDs from a database or API
-    return [f"customer{n}" for n in random.choices(range(100), k=10)]
-
-@task
-def process_customer(customer_id: str) -> str:
-    # Process a single customer
-    return f"Processed {customer_id}"
-
-@flow
-def main() -> list[str]:
-    customer_ids = get_customer_ids()
-    # Map the process_customer task across all customer IDs
-    results = process_customer.map(customer_ids)
-    return results
+dotenv.load_dotenv()
 
 
-if __name__ == "__main__":
-    main()
+uri = f"mongodb://{os.getenv("DB_MONGO_USER")}:{os.getenv("DB_MONGO_PASSWORD")}@{os.getenv("DB_MONGO_HOST")}:{int(os.getenv("DB_MONGO_PORT"))}/{os.getenv("DB_MONGO_NAME")}"
+conn = MongoClient(uri)
+
+
+db= conn.get_database(os.getenv("DB_MONGO_NAME"))
+coll = db.get_collection("CustomersGoldenRecord")
+
+res = coll.find({"country": "Poland"})
+for doc in res:
+    print(doc)
