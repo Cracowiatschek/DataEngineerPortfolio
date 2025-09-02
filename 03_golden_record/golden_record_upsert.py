@@ -1,3 +1,9 @@
+import collections.abc
+
+collections.Mapping = collections.abc.Mapping
+collections.MutableMapping = collections.abc.MutableMapping
+collections.Sequence = collections.abc.Sequence
+
 from datetime import datetime
 from typing import Generator, List
 from pymongo import UpdateOne
