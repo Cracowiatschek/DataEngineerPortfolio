@@ -1,3 +1,5 @@
 # environment and secrets
 .env
-sample_prefect_etl.py
+hidden/sample_prefect_etl.py
+hidden/test_main.py
+/hidden

@@ -1,5 +1,0 @@
-Database:
-  - database: "db_w290"
-  - user: "w290"
-  - password: ""
-  - host: "psql01.mikr.us"
