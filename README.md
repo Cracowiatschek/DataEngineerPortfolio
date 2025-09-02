@@ -9,26 +9,26 @@ Basic dataset was PostgreSQL: <a href="https://neon.com/postgresql/postgresql-ge
 ## Project List
 | id | name                   | description                                                                                         | status | path                                                                                                                        |
 |----|------------------------|-----------------------------------------------------------------------------------------------------|--------|-----------------------------------------------------------------------------------------------------------------------------|
-| 1. | Data Migration         | Data migration from localhost to instance on VPS.                                                   | ✅      | [/01_data_migration](https://github.com/Cracowiatschek/DataEngineerPortfolio/tree/master/01_data_migration)                 |
-| 2. | Data Mixing            | Daily data transformation, obtaining diffrent results every day while maintaining data consistnecy. | 💤     |                                                                                                                             |
-| 3. | Golden Record          | Daily data migration from PostgreSQL to mongoDB and create Golden Record for every customer.        | ✅️     | [/03_golden_record](https://github.com/Cracowiatschek/DataEngineerPortfolio/tree/master/03_golden_record)                   |
+| 1. | Data Migration         | Data migration from localhost to the instance on VPS.                                                   | ✅      | [/01_data_migration](https://github.com/Cracowiatschek/DataEngineerPortfolio/tree/master/01_data_migration)                 |
+| 2. | Data Mixing            | Daily data transformation, obtaining different results every day while maintaining data consistency. | 💤     |                                                                                                                             |
+| 3. | Golden Record          | Daily data migration from PostgreSQL to MongoDB and create Golden Record for every customer.        | ✅️     | [/03_golden_record](https://github.com/Cracowiatschek/DataEngineerPortfolio/tree/master/03_golden_record)                   |
 | 4. | Categorize pipeline    | Pipeline to customer categorize in Golden Record.                                                   | 🛠️    |                                                                                                                             |
-| 5. | Get data from internet | Daily getting data from API and store them in PostgreSQL.                                           | ✅      | [/05_get_data_from_internet](https://github.com/Cracowiatschek/DataEngineerPortfolio/tree/master/05_get_data_from_internet) |
+| 5. | Get data from the internet | Daily, get data from the API and store it in PostgreSQL.                                           | ✅      | [/05_get_data_from_internet](https://github.com/Cracowiatschek/DataEngineerPortfolio/tree/master/05_get_data_from_internet) |
 
 ## 1. Data Migration
-This is initializing my all projects. My target was having access to sample dataset from any devices to training for me and my wife. \
-When I was creating structures I came an idea for this portfolio. \
-So, in this project I was created copy of schema dvd_rental and migrated data from localhost to VPS with Prefect Cloud.  
-Data was copied table by table, if I got some error, process was interrupt.
+This is initializing all my projects. My target was to have access to a sample dataset from any device for training for my wife and me. \
+When I was creating structures, I came up with an idea for this portfolio. \
+So, in this project, I created a copy of the schema dvd_rental and migrated data from localhost to VPS with Prefect Cloud.  
+Data was copied table by table; if I got an error, the process was interrupted.
 
 **Tech stack:**
 * Python <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/community/logos/python-logo-only.png" height="15">
 * PostgreSQL <img src="https://www.postgresql.org/media/img/about/press/elephant.png" height="15">
 * Prefect Cloud <img src="https://www.prefect.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fprefect.999a8755.svg&w=32&q=75" height="15">
-### 1.1. Create similar data schema in VPS PostgreSQL instance.
+### 1.1. Create a similar data schema in a VPS PostgreSQL instance.
 ![](/assets/dvd_rental.png)
-### 1.2. Create load data config file.
-This is json with list of tables. 
+### 1.2. Create a load data config file.
+This is JSON with a list of tables. 
 
 #### **Structure:** 
 * **name**: table name,
@@ -39,29 +39,29 @@ This is json with list of tables.
 ### 1.3. Create migration flow.
 #### **Flow has three steps:**
 1. load configuration file,
-2. create migration queue,
+2. Create migration queue,
 3. table-by-table migration according to the queue.
 
 #### 1.3.1. Load configuration file *@task*
-File was loaded from json as list of dict.
+The file was loaded from JSON as a list of dictionaries.
 
 #### 1.3.2. Create migration queue *@task*
 A queue was created from the configuration list so that tables without dependencies were migrated first, and then, as dependencies were added, the remaining tables were migrated.
 
 #### 1.3.3. Migration *@task*
 The migration consisted of downloading the table contents from localhost and then inserting the contents according to the list of columns retrieved from the metadata in batch form.
-In case of an error, the table migration was interrupted and a rollback was performed for the given table.
+In case of an error, the table migration was interrupted, and a rollback was performed for the given table.
 
 #### 1.3.4. Run Flow with Prefect *@flow*
 
 ## 3. Golden Record
-For this project I created three materialized views to prepare data (```customers_mv```➡️simple customer attributes without joins, ```customer_aggr_mv```➡️aggregations for every customer, ```last_rentals_mv```➡️last ten rentals for every customer). \
-Project has two steps:
+For this project, I created three materialized views to prepare data (```customers_mv```➡️simple customer attributes without joins, ```customer_aggr_mv```➡️aggregations for every customer, ```last_rentals_mv```➡️last ten rentals for every customer). \
+The project has two steps:
 1. configuration (export all files/variables to Prefect Cloud) 
-2. refresh materialized views
-3. create (_upsert_) every customer as Golden Record to NoSQL DB (MongoDB) 
+2. Refresh materialized views
+3. Create (_upsert_) every customer as a Golden Record to NoSQL DB (MongoDB) 
 
-On the platform Prefect Cloud I set rule if flow with refresh views has Failed or Crashed status, next flow with Golden Record upsert waiting for manual restart earlier process.
+On the platform Prefect Cloud, I set a rule that if the flow with refresh views has a Failed or Crashed status, the next flow with Golden Record upsert is waiting for manual restart of the earlier process.
 
 ![](/assets/03_flows.png)
 ![](/assets/03_automations.png)
@@ -133,17 +133,17 @@ On the platform Prefect Cloud I set rule if flow with refresh views has Failed o
 | 7.  | return_date        | timestamp    | return date                                                                         | ```dvd_rental.rental.return_date```                                                                                                                     |
 | 8.  | rental_duration    | int          | rental duration in days                                                             | ```coalesce(dvd_rental.rental.return_date, now())-dvd_rental.rental.rental_date```                                                                      |
 | 9.  | is_completed       | bool         | true if film was returned                                                           | ```case when dvd_rental.rental.return_date is not null then true else false end```                                                                      |
-| 10. | is_overdue         | bool         | true if return date (or now if return date is empty) was after film rental duration | ```case when coalesce(dvd_rental.rental.return_date, now())-dvd_rental.rental.rental_date > dvd_rental.film.rental_duration then true else false end``` |
+| 10. | is_overdue         | bool         | true if return date (or now if return date is empty) was after film rental duration | ``` case when coalesce(dvd_rental.rental.return_date, now())-dvd_rental.rental.rental_date > dvd_rental.film.rental_duration then true else false end``` |
 | 11. | store              | text         | store where film was rental                                                         | ```address, city, country (district)```                                                                                                                 |
 | 12. | last_refresh_date  | timestamp    | timestamp of view refresh                                                           |                                                                                                                                                         |
 
 
 ## 3.1. Refresh materialized views  *@flow*
-This flow has few task: first for make queue from Prefect Cloud Block, second to getting last refresh date for all views and third to refresh view.
-If no all views are refreshed, flow try rerun 3 times.
+This flow has a few tasks: first, to make a queue from Prefect Cloud Block, second, to get the last refresh date for all views, and third, to refresh the view.
+If not all views are refreshed, flow try rerun 3 times.
 
 ### 3.1.1 Make queue from JsonConfig block *@task*
-At flow is load config from cloud, object is json with structure of array of:
+At flow is load config from cloud, object is JSON with the structure of an array of:
 ```json
 [
   {
@@ -173,29 +173,29 @@ At flow is load config from cloud, object is json with structure of array of:
   }
 ]
 ```
-And in the next step object is load and make queue of ```namedtuple("MaterializedView", ["schema", "view_name", "sources"])```, where sources is list of ```namedtuple("Source", ["schema", "table_name"])```.
-Sources is important to materialize Assets in Prefect Cloud, thanks to this, I have a full overview of overload situations on the cloud graph.
+And in the next step, the object is loaded and makes a queue of ```namedtuple("MaterializedView", ["schema", "view_name", "sources"])```, where sources is a list of ```namedtuple("Source", ["schema", "table_name"])```.
+Sources are important to materialize Assets in Prefect Cloud, thanks to this, I have a full overview of overload situations on the cloud graph.
 
 ### 3.1.2. While loop with tasks:
 
 #### 3.1.2.1. Check last refreshed data *@task*
-Task get timestamp and save it in dict with two lists of timestamps ```before``` and ```after```, at this time timestamp go to before list.
+Task: get timestamp and save it in a dict with two lists of timestamps ``` before ``` and ``` after ```, at this time, the timestamp goes to the ' before list.
 
-#### 3.1.2.2. Try refresh view *@task*
-Task try refresh materialized view from queue.
+#### 3.1.2.2. Try to refresh the view *@task*
+Task: Try to refresh the materialized view from the queue.
 
 #### 3.1.2.3. Check last refreshed data *@task*
-Like first checking, but at this time timestamp go to after list.
+Like first checking, but at this time, the timestamp goes to the after list.
 
 #### 3.1.2.4. Check refreshed timestamps *@task*
-If some timestamps is in both lists, raise error NotAllViewsRefreshed, and retry flow (limit=3 times with 120 seconds delay).
+If some timestamps are in both lists, raise error NotAllViewsRefreshed, and retry flow (limit=3 times with 120 seconds delay).
 
 ### 3.1.3. Deploy.
-Flow is deployed in Prefect Cloud with hobby workpool, and code is getting from GitHub repository.
+Flow is deployed in Prefect Cloud with a hobby workpool, and code is getting from the GitHub repository.
 
 ## 3.2. Upsert Golden Record *@flow*
-This flow has another a few task: first to get data from PostgreSQL (from refreshed materialized views), second to valid data with defined data model in Pydantic and third upsert customer to mongoDB Golden Record.
-Records are processing in batche packing in 1000 customers and upserts as bulk write operations. 
+This flow has a few tasks: first, to get data from PostgreSQL (from refreshed materialized views), second, to validate data with the defined data model in Pydantic, and third, to upsert the customer to MongoDB Golden Record.
+Records are processed in batches, packing 1000 customers and upserts as bulk write operations. 
 
 ### Golden Record structure
 
@@ -266,19 +266,19 @@ class GoldenCustomer(BaseModel):
 ```
 
 ### 3.2.1. Get data *@task*
-Create one cursor and get records in one Golden Query stored as String in Prefect Cloud, data are fetch many from task and yield function.
+Create one cursor and get records in one Golden Query stored as a String in Prefect Cloud, data is fetched from many tasks, and a yield function.
 
 ### 3.2.2. Make Golden Records *@task*
-Rows are checking row by row in defined data model, if row is not valid then pass them, if everything is okay row is transforming to Golden Record object and append to list, which is return.
+Rows are checked row by row in the defined data model. If the row is not valid, then pass it; if everything is okay, the row is transformed to a Golden Record object and appended to the list, which is returned.
 
 ### 3.2.3. Materialize Records *@task*
-This task upsert many operations in bulk write to mongoDB.
+This task upserts many operations in bulk write to MongoDB.
 
 ### 3.2.4. Deploy.
-Flow is deployed in Prefect Cloud with hobby workpool, and code is getting from GitHub repository.
+Flow is deployed in Prefect Cloud with a hobby workpool, and code is getting from the GitHub repository.
 
-# 5. Get data from internet
-In my ```dvd_rental``` schema I've ```city``` table, so I add two columns ```longitude numeric, latitude numeric``` and I enrich data about this information by OSM API Nominatim (```from geopy.geocoders import Nominatim```), where I get coordinates of city center and send to PostgreSQL.
+# 5. Get data from the internet
+In my ```dvd_rental``` schema, I've ```city``` table, so I add two columns ```longitude numeric, latitude numeric``` and I enrich data about this information by OSM API Nominatim (``` from geopy.geocoders import Nominatim```), where I get coordinates of the city center and send to PostgreSQL.
 
 **Tech stack:**
 * Python <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/community/logos/python-logo-only.png" height="15">
@@ -288,20 +288,19 @@ In my ```dvd_rental``` schema I've ```city``` table, so I add two columns ```lon
 
 ## 5.1. Get cities without coordinates *@task*
 From PostgreSQL get data with query (stored in Prefect Cloud), and return list of ```namedtuple("City", ["id", "city", "country", "longitude", "latitude"])```.
-Longitude and Latitude are placeholder with None value, City and Country need to search coordinates.
+Longitude and Latitude are placeholders with a None value; City and Country need to search for coordinates.
 
 ![](assets/05_flows.png)
 
 ## 5.2. Make queue *@task*
-Change list of City to queue to better organised next step.
+Change the list of cities to queue to better organise the next step.
 
 ## 5.3. Get coordinates *@task*
-As input is queue of City, task has while loop and iterate objects and send API request by ```geopy.geocoders``` library with one-second delay between requests (protection against IP blocking and timeouts).
-If request return location, City object with longitude and latitude append to list and return this list.
+As input is a queue of City, the task has a while loop, iterate objects, and send API request by ```geopy.geocoders` library with one-second delay between requests (protection against IP blocking and timeouts).
+If a request returns a location, a City object with longitude and latitude is appended to the list and returned.
 
 ## 5.4. Save coordinates *@task*
-In cursor I create TMP table with query from Cloud, and use ```COPY``` statement to insert data to table, if table has data update target object by query from Cloud. If something will be wrong, process rollback changes.
+In cursor, I create a TMP table with a query from Cloud, and use ```COPY``` statement to insert data into the table, if the table has data, update the target object by query from Cloud. If something goes wrong, process rollback changes.
 
 ## 5.5. Deploy.
-Flow is deployed in Prefect Cloud with hobby workpool, and code is getting from GitHub repository.
-
+Flow is deployed in Prefect Cloud with a hobby workpool, and code is getting from the GitHub repository.
