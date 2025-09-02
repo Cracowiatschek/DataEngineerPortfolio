@@ -4,6 +4,8 @@ Hi, this is a repository that contains a few projects with my Data Engineer skil
 My basic tech stack are **<a href="https://www.python.org/">Python</a>, <a href="https://www.postgresql.org/">PostgreSQL</a>, <a href="https://www.mongodb.com/">mongoDB</a>, <a href="https://www.prefect.io/">Prefect Cloud</a>**.
 Basic dataset was PostgreSQL: <a href="https://neon.com/postgresql/postgresql-getting-started/postgresql-sample-database"> dvd_rental.tar </a>.
 
+
+
 ## Project List
 | id | name                   | description                                                                                         | status | path                                                                                                                        |
 |----|------------------------|-----------------------------------------------------------------------------------------------------|--------|-----------------------------------------------------------------------------------------------------------------------------|
@@ -62,6 +64,7 @@ Project has two steps:
 On the platform Prefect Cloud I set rule if flow with refresh views has Failed or Crashed status, next flow with Golden Record upsert waiting for manual restart earlier process.
 
 ![](/assets/03_flows.png)
+![](/assets/03_automations.png)
 
 **Tech stack:**
 * Python <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/community/logos/python-logo-only.png" height="15">
@@ -191,4 +194,114 @@ If some timestamps is in both lists, raise error NotAllViewsRefreshed, and retry
 Flow is deployed in Prefect Cloud with hobby workpool, and code is getting from GitHub repository.
 
 ## 3.2. Upsert Golden Record *@flow*
-This flow has another a few task: first to get data from PostgreSQL (from refreshed materialized views),  
+This flow has another a few task: first to get data from PostgreSQL (from refreshed materialized views), second to valid data with defined data model in Pydantic and third upsert customer to mongoDB Golden Record.
+Records are processing in batche packing in 1000 customers and upserts as bulk write operations. 
+
+### Golden Record structure
+
+```python
+from datetime import datetime
+from typing import List, Optional
+from pydantic import BaseModel, confloat, EmailStr, conint
+
+class GoldenRental(BaseModel):
+    _id = int
+    title: str
+    category: str
+    amount: confloat(ge=0)
+    rental_date: datetime
+    return_date: Optional[datetime]
+    rental_duration: conint(ge=0)
+    is_completed: bool
+    is_overdue: bool
+    store: str
+
+
+class Source(BaseModel):
+    _id: int
+    sub_id: Optional[List[int]]
+    path: str
+    fields: List[str]
+    last_refreshed: datetime
+
+
+class GoldenCustomer(BaseModel):
+    id: int
+    first_name: str
+    last_name: str
+    is_active: bool
+    full_address: str
+    address: str
+    district: Optional[str]
+    city: str
+    country: str
+    latitude: confloat(ge=-90, le=90) = 0.0
+    longitude: confloat(ge=-180, le=180) = 0.0
+    phone: Optional[str]
+    email: Optional[EmailStr]
+    postal_code: Optional[str]
+    assistant_name: str
+    assistant_email: str
+    overdue_score: conint(ge=0, le=100)
+    most_recent_store: Optional[str]
+    last_rental_film: Optional[str]
+    last_rental_date: Optional[datetime]
+    lifetime_value: confloat(ge=0) = 0.00
+    total_rental_count: conint(ge=0) = 0
+    average_rental_duration: confloat(ge=0, le=500)  = 0.00
+    average_rental_payment: confloat(ge=0) = 0.00
+    average_film_duration: confloat(ge=0) = 0.00
+    last_year_rental_count: conint(ge=0) = 0
+    last_year_payments_sum: confloat(ge=0) = 0.00
+    last_payment: confloat(ge=0) = 0.00
+    most_recent_film_category: Optional[str]
+    second_most_recent_film_category: Optional[str]
+    third_most_recent_film_category: Optional[str]
+    most_recent_film_title: Optional[str]
+    most_recent_film_actor: Optional[str]
+    most_recent_film_year: Optional[str]
+    last_ten_rentals: Optional[List[GoldenRental]]
+    last_consolidation_date: datetime
+    sources: List[Source]
+```
+
+### 3.2.1. Get data *@task*
+Create one cursor and get records in one Golden Query stored as String in Prefect Cloud, data are fetch many from task and yield function.
+
+### 3.2.2. Make Golden Records *@task*
+Rows are checking row by row in defined data model, if row is not valid then pass them, if everything is okay row is transforming to Golden Record object and append to list, which is return.
+
+### 3.2.3. Materialize Records *@task*
+This task upsert many operations in bulk write to mongoDB.
+
+### 3.2.4. Deploy.
+Flow is deployed in Prefect Cloud with hobby workpool, and code is getting from GitHub repository.
+
+# 5. Get data from internet
+In my ```dvd_rental``` schema I've ```city``` table, so I add two columns ```longitude numeric, latitude numeric``` and I enrich data about this information by OSM API Nominatim (```from geopy.geocoders import Nominatim```), where I get coordinates of city center and send to PostgreSQL.
+
+**Tech stack:**
+* Python <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/community/logos/python-logo-only.png" height="15">
+* PostgreSQL <img src="https://www.postgresql.org/media/img/about/press/elephant.png" height="15">
+* Prefect Cloud <img src="https://www.prefect.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fprefect.999a8755.svg&w=32&q=75" height="15">
+* GitHub <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Octicons-mark-github.svg/960px-Octicons-mark-github.svg.png?20180806170715" height="15">
+
+## 5.1. Get cities without coordinates *@task*
+From PostgreSQL get data with query (stored in Prefect Cloud), and return list of ```namedtuple("City", ["id", "city", "country", "longitude", "latitude"])```.
+Longitude and Latitude are placeholder with None value, City and Country need to search coordinates.
+
+![](assets/05_flows.png)
+
+## 5.2. Make queue *@task*
+Change list of City to queue to better organised next step.
+
+## 5.3. Get coordinates *@task*
+As input is queue of City, task has while loop and iterate objects and send API request by ```geopy.geocoders``` library with one-second delay between requests (protection against IP blocking and timeouts).
+If request return location, City object with longitude and latitude append to list and return this list.
+
+## 5.4. Save coordinates *@task*
+In cursor I create TMP table with query from Cloud, and use ```COPY``` statement to insert data to table, if table has data update target object by query from Cloud. If something will be wrong, process rollback changes.
+
+## 5.5. Deploy.
+Flow is deployed in Prefect Cloud with hobby workpool, and code is getting from GitHub repository.
+
