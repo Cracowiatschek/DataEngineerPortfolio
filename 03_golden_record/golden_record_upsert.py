@@ -11,8 +11,7 @@ from data_model import GoldenCustomer, GoldenRental, Source
 from utills.db import create_mongo_conn, create_pg_conn
 from prefect import task, flow, get_run_logger
 from prefect.assets import materialize
-from prefect.blocks.system import Secret
-from prefect.blocks.system import String
+from prefect.blocks.system import Secret, String
 
 
 PG_HOST:str = Secret.load("pg-host").get()
