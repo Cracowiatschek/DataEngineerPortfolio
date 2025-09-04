@@ -1,0 +1,38 @@
+{
+  "collection": "CustomersGoldenRecord",
+  "fields": ["_id", "overdue_score", "lifetime_value", "total_rental_count", "average_rental_duration",
+    "average_rental_payment"],
+  "model": "categorize-customers",
+  "labels": {
+    "0": {
+      "name":"Diamond",
+      "description": "The most valuable customers, those who use services intensively, but also have a higher risk of delays."
+    },
+    "1": {
+      "name":"Gold",
+      "description": "Valuable, active clients, but with a slight tendency to default. They generate value but require risk management."
+    },
+    "2": {
+      "name":"Silver",
+      "description": "Average customers, Active, but without any outstanding indicators. Stable, average-value customer base."
+    },
+    "3": {
+      "name":"Bronze",
+      "description": "Low-value customers, low activity, and few arrears. This is a typical segment – large but of little business value."
+    }
+  },
+  "alert": {
+    "successful": {
+      "from": "kontakt@piotrbaran.me",
+      "to": "kontakt@piotrbaran.me",
+      "subject": "Success: model retrained",
+      "body-variable": "success-template"
+    },
+    "failed": {
+      "from": "kontakt@piotrbaran.me",
+      "to": "kontakt@piotrbaran.me",
+      "subject": "Failure: Failed to retrain the model",
+      "body-variable": "failed-template"
+    }
+  }
+}
