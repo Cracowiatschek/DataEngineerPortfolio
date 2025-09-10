@@ -3,6 +3,7 @@
   "fields": ["_id", "overdue_score", "lifetime_value", "total_rental_count", "average_rental_duration",
     "average_rental_payment"],
   "model": "categorize-customers",
+  "model_threshold": 0.500,
   "labels": {
     "0": {
       "name":"Diamond",

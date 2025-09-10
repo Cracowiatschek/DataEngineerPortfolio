@@ -1,6 +1,6 @@
 from prefect.blocks.core import Block
 from pydantic import Field
-from typing import List, Dict, Any
+from typing import Dict, Any
 
 
 class JSONConfig(Block):
